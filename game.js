@@ -18,50 +18,36 @@ let state = "menu";
 let score = 0;
 let lives = 5;
 let level = 1;
-
 let caughtCount = 0;
 
 let balls = [];
 let levelBalls = [];
 
 // =====================
-// INPUT (FIXED FOR ALL BROWSERS)
+// INPUT (FIXED FOR iOS + VK + CHROME)
 // =====================
 
 let targetX = innerWidth / 2;
 let coneX = innerWidth / 2;
-let pointerActive = false;
 
-// 🔥 pointer down = захват управления
-canvas.addEventListener("pointerdown", (e) => {
-  pointerActive = true;
-  targetX = e.clientX;
+// 🔥 UNIVERSAL INPUT (NO POINTER CAPTURE)
+function setInput(x) {
+  targetX = x;
+}
 
-  // CRITICAL FIX for Chrome + VK WebView
-  if (canvas.setPointerCapture) {
-    canvas.setPointerCapture(e.pointerId);
-  }
+// Desktop / Android
+window.addEventListener("pointermove", (e) => {
+  setInput(e.clientX);
 });
 
-// 🔥 pointer move = движение только если активен
-canvas.addEventListener("pointermove", (e) => {
-  if (!pointerActive) return;
-  targetX = e.clientX;
-});
-
-// pointer up
-canvas.addEventListener("pointerup", () => {
-  pointerActive = false;
-});
-
-// fallback safety (Safari old cases)
+// iOS Safari / Chrome / VK WebView (CRITICAL)
 window.addEventListener("touchstart", (e) => {
-  targetX = e.touches[0].clientX;
-});
+  setInput(e.touches[0].clientX);
+}, { passive: true });
 
 window.addEventListener("touchmove", (e) => {
-  targetX = e.touches[0].clientX;
-}, { passive: false });
+  setInput(e.touches[0].clientX);
+}, { passive: true });
 
 // =====================
 function setScreen(id) {
@@ -120,7 +106,7 @@ function startLevel() {
 }
 
 // =====================
-// FEEL (SMOOTHING)
+// FEEL SMOOTHING
 // =====================
 function updateCone() {
   coneX += (targetX - coneX) * 0.18;
@@ -215,6 +201,8 @@ function gameOver() {
 // =====================
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  updateCone();
 
   drawCone();
 
