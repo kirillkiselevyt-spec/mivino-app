@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Mivino Ice Cream</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div id="score">Очки: 0</div>
+  <div id="lives">❤️❤️❤️❤️❤️</div>
+  <div id="level">Уровень: 1</div>
+</div>
+
+<div id="roundCounter">0 / 20</div>
+
+<div id="startScreen" class="screen">
+  <h1>Mivino Ice Cream</h1>
+  <button onclick="window.startGame()">Играть</button>
+  <button onclick="window.openInventory()">Инвентарь</button>
+  <button onclick="window.openStats()">Статистика и Лидеры</button>
+</div>
+
+<div id="inventoryScreen" class="screen" style="display:none; padding:20px; text-align:center;">
+  <h2>Магазин</h2>
+  <div id="inventoryItemsContainer" style="margin-bottom:20px;"></div>
+  <button onclick="UI.show('startScreen')">Назад</button>
+</div>
+
+<div id="statsScreen" class="screen">
+  <h2>Таблица лидеров (Топ-5)</h2>
+  <div id="leaderboardContainer"></div>
+  <h2 style="margin-top: 20px;">История всех игр</h2>
+  <div id="historyContainer"></div>
+  <button onclick="window.closeStats()" style="margin-top: 15px;">Назад</button>
+</div>
+
+<div id="nextLevelScreen" class="screen">
+  <h2>Уровень пройден!</h2>
+  <p id="levelBonusAlert" style="color: #ff4791; font-weight: bold; display: none;">Бонус +300 очков за 10 уровней!</p>
+  <button onclick="window.nextLevel()">Дальше</button>
+</div>
+
+<div id="gameOver" class="screen">
+  <h1>Игра окончена</h1>
+  <p id="finalScore">Счёт: 0</p>
+  <p id="finalLevel">Достигнут уровень: 1</p>
+  <h2 style="font-size: 20px; margin-top: 15px;">Твои лучшие результаты:</h2>
+  <div id="endLeaderboardContainer" style="width: 80%; max-width: 320px; margin-bottom: 15px;"></div>
+  <div class="button-row">
+    <button onclick="window.restartGame()">Заново</button>
+    <button onclick="window.openStatsFromGameOver()">Вся статистика</button>
+  </div>
+</div>
+
+<script src="state.js"></script>
+<script src="loader.js"></script>
+<script src="fx.js"></script>
+<script src="render.js"></script>
+<script src="engine.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
