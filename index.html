@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mivino Ice Cream</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div id="score">Очки: 0</div>
+  <div id="lives">❤️❤️❤️❤️❤️</div>
+  <div id="level">Уровень: 1</div>
+</div>
+
+<div id="round">0 / 20</div>
+
+<!-- START -->
+<div id="start">
+  <h1>Mivino Ice Cream</h1>
+  <button id="playBtn">Играть</button>
+  <button id="statsBtn">Статистика</button>
+</div>
+
+<!-- STATS -->
+<div id="stats">
+  <h2>Статистика</h2>
+  <p>Лучший: <span id="best">0</span></p>
+  <p>Последний: <span id="last">0</span></p>
+  <button id="backBtn">Назад</button>
+</div>
+
+<!-- NEXT -->
+<div id="next">
+  <h2>Уровень пройден!</h2>
+  <button id="nextBtn">Следующий</button>
+</div>
+
+<!-- GAME OVER -->
+<div id="over">
+  <h2>Игра окончена</h2>
+  <p id="final"></p>
+  <button id="restartBtn">Заново</button>
+  <button id="overStatsBtn">Статистика</button>
+</div>
+
+<script src="game.js"></script>
+
+</body>
+</html>
