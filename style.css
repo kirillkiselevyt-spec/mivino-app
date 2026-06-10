@@ -8,6 +8,9 @@ body {
 canvas {
   position: absolute;
   inset: 0;
+
+  /* 🔥 ВАЖНО ДЛЯ МОБИЛОК */
+  touch-action: none;
 }
 
 #ui {
@@ -22,14 +25,9 @@ canvas {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-family: "Lora", serif;
-  font-weight: 700;
-  font-size: 12px;
 
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.6);
@@ -50,14 +48,4 @@ canvas {
   flex-direction: column;
   background: rgba(255,255,255,0.92);
   z-index: 100;
-}
-
-button {
-  margin-top: 10px;
-  padding: 12px 18px;
-  border: none;
-  border-radius: 12px;
-  font-family: "Lora", serif;
-  background: #ff5fa2;
-  color: white;
 }
