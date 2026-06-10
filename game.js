@@ -9,7 +9,6 @@ function resize(){
 resize();
 addEventListener("resize", resize);
 
-// =====================
 let state = "menu";
 
 let score = 0;
@@ -24,7 +23,6 @@ let pool = [];
 
 let coneX = innerWidth / 2;
 
-// ===================== UI
 const ui = {
   score: document.getElementById("score"),
   lives: document.getElementById("lives"),
@@ -42,32 +40,13 @@ const screens = {
   over: document.getElementById("over")
 };
 
-// =====================
-addEventListener("pointermove", e => {
-  coneX = e.clientX;
-});
+addEventListener("pointermove", e => coneX = e.clientX);
 
-// =====================
 function show(name){
   Object.values(screens).forEach(s => s.style.display = "none");
   if(name) screens[name].style.display = "flex";
 }
 
-// =====================
-// 🌫 NEW: SOFT CANVAS BACKGROUND GRADIENT
-// =====================
-function drawBackground(){
-  const g = ctx.createLinearGradient(0,0,W,H);
-
-  g.addColorStop(0, "#f7f5ff");
-  g.addColorStop(0.5, "#eef7ff");
-  g.addColorStop(1, "#fff4f7");
-
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,W,H);
-}
-
-// =====================
 function startLevel(){
   balls = [];
   pool = [];
@@ -86,7 +65,6 @@ function startLevel(){
   }
 }
 
-// =====================
 function startGame(){
   score = 0;
   lives = 5;
@@ -97,7 +75,6 @@ function startGame(){
   show(null);
 }
 
-// =====================
 function checkRound(){
   const total = caught + missed;
 
@@ -113,7 +90,6 @@ function checkRound(){
   }
 }
 
-// =====================
 function save(){
   localStorage.setItem("last", score);
   let best = localStorage.getItem("best") || 0;
@@ -122,7 +98,6 @@ function save(){
   }
 }
 
-// =====================
 function spawn(){
   for(let b of pool){
     if(!b.active){
@@ -135,7 +110,6 @@ function spawn(){
   }
 }
 
-// =====================
 function update(){
   if(state !== "play") return;
 
@@ -168,7 +142,6 @@ function update(){
   checkRound();
 }
 
-// =====================
 function gameOver(){
   state = "over";
   show("over");
@@ -179,9 +152,8 @@ function gameOver(){
   ui.last.innerText = localStorage.getItem("last") || 0;
 }
 
-// =====================
 function render(){
-  drawBackground(); // ✅ IMPORTANT FIX
+  ctx.clearRect(0,0,W,H);
 
   ctx.fillStyle = "#d8a15a";
   ctx.beginPath();
@@ -202,14 +174,13 @@ function render(){
   ui.level.innerText = "Уровень: " + level;
 }
 
-// =====================
 function loop(){
   update();
   render();
   requestAnimationFrame(loop);
 }
 
-// =====================
+// buttons
 document.getElementById("playBtn").onclick = startGame;
 document.getElementById("statsBtn").onclick = () => show("stats");
 document.getElementById("backBtn").onclick = () => show("start");
