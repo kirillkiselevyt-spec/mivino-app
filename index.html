@@ -20,21 +20,25 @@
 
 <div id="roundCounter">0 / 20</div>
 
-<!-- MENU -->
+<!-- START SCREEN -->
 <div id="startScreen" class="screen">
   <h1>Mivino Ice Cream</h1>
+
   <button onclick="startGame()">Играть</button>
   <button onclick="openStats()">Статистика</button>
 </div>
 
-<!-- STATS -->
+<!-- STATS SCREEN -->
 <div id="statsScreen" class="screen">
   <h2>Статистика</h2>
+
   <p>Лучший результат: <span id="bestScore">0</span></p>
+  <p>Последний результат: <span id="lastScore">0</span></p>
+
   <button onclick="closeStats()">Назад</button>
 </div>
 
-<!-- NEXT -->
+<!-- NEXT LEVEL -->
 <div id="nextLevelScreen" class="screen">
   <h2>Уровень пройден!</h2>
   <button onclick="nextLevel()">Следующий уровень</button>
