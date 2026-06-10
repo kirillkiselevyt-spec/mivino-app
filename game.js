@@ -27,12 +27,12 @@ let state = "menu";
 let score = 0;
 let lives = 5;
 let level = 1;
+
 let caught = 0;
+let processed = 0; // 👈 FIX CORE
 
 let balls = [];
 let levelBalls = [];
-let particles = [];
-let shake = 0;
 
 // cone
 let coneX = innerWidth/2;
@@ -40,15 +40,13 @@ let coneV = 0;
 let targetX = coneX;
 
 // =====================
-// INPUT (SAFE CROSS-BROWSER)
+// INPUT
 // =====================
-function setInput(x){ targetX = x; }
-
-window.addEventListener("pointermove", e => setInput(e.clientX));
-window.addEventListener("touchmove", e => setInput(e.touches[0].clientX), { passive:true });
+window.addEventListener("pointermove", e => targetX = e.clientX);
+window.addEventListener("touchmove", e => targetX = e.touches[0].clientX, { passive:true });
 
 // =====================
-// UI CONTROL
+// UI CONTROL (FIXED)
 // =====================
 function show(s){
   Object.values(screens).forEach(v => v.style.display="none");
@@ -60,7 +58,10 @@ window.closeStats = () => show(screens.start);
 
 // =====================
 window.startGame = function(){
-  score=0;lives=5;level=1;caught=0;
+  score=0;lives=5;level=1;
+  caught=0;
+  processed=0;
+
   startLevel();
   state="play";
   show(null);
@@ -71,6 +72,7 @@ window.restartGame = startGame;
 window.nextLevel = function(){
   level++;
   if(level>20) return gameOver();
+
   startLevel();
   state="play";
   show(null);
@@ -78,10 +80,14 @@ window.nextLevel = function(){
 
 // =====================
 function startLevel(){
-  balls=[]; levelBalls=[]; caught=0; particles=[];
+  balls=[];
+  levelBalls=[];
+  caught=0;
+  processed=0;
 
   for(let i=0;i<20;i++){
     const trigger=0.6-0.2*(i/19);
+
     levelBalls.push({
       x:Math.random()*canvas.width,
       y:-50,
@@ -89,54 +95,34 @@ function startLevel(){
       speed:2+level*0.35,
       color:["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"][i%5],
       spawned:false,
-      trigger
+      trigger,
+      done:false
     });
   }
 }
 
 // =====================
-// PHYSICS (STABLE V20)
+// PHYSICS
 // =====================
 function updateCone(){
   const force=(targetX-coneX)*0.16;
   coneV=(coneV+force)*0.84;
-  coneV=Math.max(-26,Math.min(26,coneV));
   coneX+=coneV;
+
   coneX=Math.max(60,Math.min(canvas.width-60,coneX));
 }
 
 // =====================
-// JUICE (SAFE)
+// LEVEL END FIX (MAIN FIX)
 // =====================
-function vibrate(ms){
-  if(navigator.vibrate) navigator.vibrate(ms);
-}
+function checkLevelEnd(){
+  const allSpawned = levelBalls.every(b => b.spawned);
+  const allDone = levelBalls.every(b => b.done);
 
-let audioReady=false;
-function beep(f){
-  if(!audioReady){
-    audioReady=true;
-    return;
-  }
-  try{
-    const a=new AudioContext();
-    const o=a.createOscillator();
-    o.frequency.value=f;
-    o.connect(a.destination);
-    o.start();
-    o.stop(a.currentTime+0.05);
-  }catch(e){}
-}
-
-function burst(x,y,c){
-  for(let i=0;i<6;i++){
-    particles.push({
-      x,y,
-      vx:(Math.random()-0.5)*3,
-      vy:(Math.random()-0.5)*3,
-      life:25,
-      color:c
-    });
+  if(allSpawned && allDone){
+    score += 100;
+    state="next";
+    show(screens.next);
   }
 }
 
@@ -149,7 +135,7 @@ function update(){
   for(let b of levelBalls){
     if(!b.spawned){
       const last=balls[balls.length-1];
-      if(!last||last.y>canvas.height*b.trigger){
+      if(!last || last.y > canvas.height*b.trigger){
         b.spawned=true;
         balls.push(b);
       }
@@ -158,36 +144,34 @@ function update(){
 
   for(let i=0;i<balls.length;i++){
     let b=balls[i];
-    b.y+=b.speed;
 
-    const hit=b.y>canvas.height-100 && Math.abs(b.x-coneX)<65;
+    b.y += b.speed;
+
+    const hit = b.y > canvas.height-100 && Math.abs(b.x-coneX)<65;
 
     if(hit){
-      score++;caught++;
-      burst(b.x,b.y,b.color);
-      vibrate(10);
-      beep(600);
+      score++;
+      caught++;
+      b.done=true;
       balls.splice(i--,1);
       continue;
     }
 
-    if(b.y>canvas.height){
-      lives--;shake=8;
-      vibrate(30);
-      beep(180);
+    if(b.y > canvas.height){
+      lives--;
+      b.done=true;
       balls.splice(i--,1);
     }
   }
 
-  roundCounter.innerText=`${caught}/20`;
+  // count processed correctly
+  processed = levelBalls.filter(b=>b.done).length;
 
-  if(caught>=20 && balls.length===0){
-    score+=100;
-    state="next";
-    show(screens.next);
-  }
+  roundCounter.innerText = `${processed}/20`;
 
   if(lives<=0) gameOver();
+
+  checkLevelEnd();
 }
 
 // =====================
@@ -197,7 +181,7 @@ function gameOver(){
 
   document.getElementById("finalScore").innerText="Счёт: "+score;
 
-  let best=localStorage.getItem("best")||0;
+  let best = localStorage.getItem("best")||0;
   if(score>best){
     localStorage.setItem("best",score);
     best=score;
@@ -210,7 +194,6 @@ function gameOver(){
 function render(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // cone
   ctx.fillStyle="#d8a15a";
   ctx.beginPath();
   ctx.moveTo(coneX-60,canvas.height-120);
@@ -218,23 +201,12 @@ function render(){
   ctx.lineTo(coneX,canvas.height-20);
   ctx.fill();
 
-  // balls
   for(let b of balls){
     ctx.fillStyle=b.color;
     ctx.beginPath();
     ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
     ctx.fill();
   }
-
-  // particles
-  for(let p of particles){
-    ctx.globalAlpha=p.life/25;
-    ctx.fillStyle=p.color;
-    ctx.fillRect(p.x,p.y,3,3);
-    p.x+=p.vx;p.y+=p.vy;p.life--;
-  }
-  ctx.globalAlpha=1;
-  particles=particles.filter(p=>p.life>0);
 
   document.getElementById("score").innerText="Очки: "+score;
   document.getElementById("lives").innerText="❤️".repeat(lives);
