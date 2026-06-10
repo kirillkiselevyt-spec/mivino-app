@@ -9,7 +9,7 @@ canvas {
   position: absolute;
   inset: 0;
 
-  /* 🔥 ГЛАВНЫЙ ФИКС ДЛЯ CHROME + VK + iOS */
+  /* 🔥 критично для iOS + VK + Chrome */
   touch-action: none;
   overscroll-behavior: none;
   -webkit-user-select: none;
