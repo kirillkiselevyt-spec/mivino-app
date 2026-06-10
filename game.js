@@ -1,12 +1,18 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// UI
+const screens = {
+  start: document.getElementById("startScreen"),
+  stats: document.getElementById("statsScreen"),
+  next: document.getElementById("nextLevelScreen"),
+  over: document.getElementById("gameOver")
+};
+
 const roundCounter = document.getElementById("roundCounter");
 
 // =====================
-// RESIZE
-// =====================
-function resize() {
+function resize(){
   canvas.width = innerWidth;
   canvas.height = innerHeight;
 }
@@ -21,317 +27,226 @@ let state = "menu";
 let score = 0;
 let lives = 5;
 let level = 1;
-let caughtCount = 0;
+let caught = 0;
 
 let balls = [];
 let levelBalls = [];
-
-// =====================
-// INPUT + PHYSICS (V18 base)
-// =====================
-let targetX = innerWidth / 2;
-let coneX = innerWidth / 2;
-let coneVelocity = 0;
-
-// =====================
-// JUICE STATE
-// =====================
 let particles = [];
 let shake = 0;
 
+// cone
+let coneX = innerWidth/2;
+let coneV = 0;
+let targetX = coneX;
+
 // =====================
-// AUDIO (no files)
+// INPUT (SAFE CROSS-BROWSER)
 // =====================
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function setInput(x){ targetX = x; }
 
-function beep(freq, time, type = "sine", vol = 0.05) {
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
+window.addEventListener("pointermove", e => setInput(e.clientX));
+window.addEventListener("touchmove", e => setInput(e.touches[0].clientX), { passive:true });
 
-  o.type = type;
-  o.frequency.value = freq;
-  g.gain.value = vol;
-
-  o.connect(g);
-  g.connect(audioCtx.destination);
-
-  o.start();
-  o.stop(audioCtx.currentTime + time);
+// =====================
+// UI CONTROL
+// =====================
+function show(s){
+  Object.values(screens).forEach(v => v.style.display="none");
+  if(s) s.style.display="flex";
 }
 
-// =====================
-// HAPTIC
-// =====================
-function vibrate(ms) {
-  if (navigator.vibrate) navigator.vibrate(ms);
-}
+window.openStats = () => show(screens.stats);
+window.closeStats = () => show(screens.start);
 
 // =====================
-// INPUT
-// =====================
-function setInput(x) {
-  targetX = x;
-}
-
-window.addEventListener("pointermove", (e) => setInput(e.clientX));
-window.addEventListener("touchmove", (e) => setInput(e.touches[0].clientX), { passive: true });
-
-// =====================
-// SCREEN
-// =====================
-function setScreen(id) {
-  ["startScreen","nextLevelScreen","gameOver"]
-    .forEach(i => document.getElementById(i).style.display = "none");
-
-  if (id) document.getElementById(id).style.display = "flex";
-}
-
-// =====================
-window.startGame = function () {
-  score = 0;
-  lives = 5;
-  level = 1;
-  caughtCount = 0;
-
+window.startGame = function(){
+  score=0;lives=5;level=1;caught=0;
   startLevel();
-  state = "play";
-  setScreen(null);
+  state="play";
+  show(null);
 };
 
-window.nextLevel = function () {
+window.restartGame = startGame;
+
+window.nextLevel = function(){
   level++;
-  if (level > 20) return gameOver();
-
+  if(level>20) return gameOver();
   startLevel();
-  state = "play";
-  setScreen(null);
-};
-
-window.restartGame = function () {
-  startGame();
+  state="play";
+  show(null);
 };
 
 // =====================
-function startLevel() {
-  balls = [];
-  levelBalls = [];
-  caughtCount = 0;
-  particles = [];
+function startLevel(){
+  balls=[]; levelBalls=[]; caught=0; particles=[];
 
-  for (let i = 0; i < 20; i++) {
-    const trigger = 0.6 - 0.2 * (i / 19);
-
+  for(let i=0;i<20;i++){
+    const trigger=0.6-0.2*(i/19);
     levelBalls.push({
-      x: Math.random() * canvas.width,
-      y: -50,
-      r: 22,
-      speed: 2 + level * 0.4,
-      color: ["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"][i % 5],
-      spawned: false,
+      x:Math.random()*canvas.width,
+      y:-50,
+      r:22,
+      speed:2+level*0.35,
+      color:["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"][i%5],
+      spawned:false,
       trigger
     });
   }
-
-  roundCounter.innerText = "0 / 20";
 }
 
 // =====================
-// V19 CONE PHYSICS + JUICE
+// PHYSICS (STABLE V20)
 // =====================
-function updateCone() {
-  const attraction = 0.18;
-  const damping = 0.82;
-  const maxSpeed = 28;
-
-  const force = (targetX - coneX) * attraction;
-
-  coneVelocity += force;
-  coneVelocity *= damping;
-
-  coneVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, coneVelocity));
-
-  coneX += coneVelocity;
-
-  const margin = 60;
-  coneX = Math.max(margin, Math.min(canvas.width - margin, coneX));
-
-  // 🍦 squash & stretch (visual feel)
-  coneScale = 1 + Math.abs(coneVelocity) * 0.01;
-  coneScale = Math.min(1.25, coneScale);
+function updateCone(){
+  const force=(targetX-coneX)*0.16;
+  coneV=(coneV+force)*0.84;
+  coneV=Math.max(-26,Math.min(26,coneV));
+  coneX+=coneV;
+  coneX=Math.max(60,Math.min(canvas.width-60,coneX));
 }
 
-let coneScale = 1;
+// =====================
+// JUICE (SAFE)
+// =====================
+function vibrate(ms){
+  if(navigator.vibrate) navigator.vibrate(ms);
+}
 
-// =====================
-// PARTICLES
-// =====================
-function spawnParticle(x, y, color) {
-  for (let i = 0; i < 8; i++) {
+let audioReady=false;
+function beep(f){
+  if(!audioReady){
+    audioReady=true;
+    return;
+  }
+  try{
+    const a=new AudioContext();
+    const o=a.createOscillator();
+    o.frequency.value=f;
+    o.connect(a.destination);
+    o.start();
+    o.stop(a.currentTime+0.05);
+  }catch(e){}
+}
+
+function burst(x,y,c){
+  for(let i=0;i<6;i++){
     particles.push({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-      life: 30,
-      color
+      x,y,
+      vx:(Math.random()-0.5)*3,
+      vy:(Math.random()-0.5)*3,
+      life:25,
+      color:c
     });
   }
 }
 
-function updateParticles() {
-  for (let p of particles) {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
-  }
-  particles = particles.filter(p => p.life > 0);
-}
-
 // =====================
-// DRAW CONE (JUICED)
-// =====================
-function drawCone() {
-  const x = coneX;
-  const y = canvas.height - 120;
-
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(coneScale, 1);
-
-  ctx.fillStyle = "#d8a15a";
-
-  ctx.beginPath();
-  ctx.moveTo(-60, 0);
-  ctx.lineTo(60, 0);
-  ctx.lineTo(0, 140);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
-
-  roundCounter.style.left = x + "px";
-  roundCounter.style.top = (y + 20) + "px";
-}
-
-// =====================
-function drawBall(b) {
-  ctx.fillStyle = b.color;
-  ctx.beginPath();
-  ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-// =====================
-// UPDATE GAME
-// =====================
-function update() {
-  if (state !== "play") return;
+function update(){
+  if(state!=="play") return;
 
   updateCone();
-  updateParticles();
 
-  for (let b of levelBalls) {
-    if (!b.spawned) {
-      const last = balls[balls.length - 1];
-      const triggerY = canvas.height * b.trigger;
-
-      if (!last || last.y > triggerY) {
-        b.spawned = true;
+  for(let b of levelBalls){
+    if(!b.spawned){
+      const last=balls[balls.length-1];
+      if(!last||last.y>canvas.height*b.trigger){
+        b.spawned=true;
         balls.push(b);
       }
     }
   }
 
-  for (let i = 0; i < balls.length; i++) {
-    let b = balls[i];
-    b.y += b.speed;
+  for(let i=0;i<balls.length;i++){
+    let b=balls[i];
+    b.y+=b.speed;
 
-    const hit =
-      b.y > canvas.height - 100 &&
-      Math.abs(b.x - coneX) < 65; // 🎯 slight assist
+    const hit=b.y>canvas.height-100 && Math.abs(b.x-coneX)<65;
 
-    if (hit) {
-      score++;
-      caughtCount++;
-
-      spawnParticle(b.x, b.y, b.color);
-
-      beep(600, 0.05, "sine", 0.04);
-      vibrate(15);
-
-      balls.splice(i, 1);
-      i--;
+    if(hit){
+      score++;caught++;
+      burst(b.x,b.y,b.color);
+      vibrate(10);
+      beep(600);
+      balls.splice(i--,1);
       continue;
     }
 
-    if (b.y > canvas.height) {
-      lives--;
-
-      shake = 10;
-      beep(200, 0.08, "square", 0.03);
-      vibrate(40);
-
-      balls.splice(i, 1);
-      i--;
+    if(b.y>canvas.height){
+      lives--;shake=8;
+      vibrate(30);
+      beep(180);
+      balls.splice(i--,1);
     }
   }
 
-  roundCounter.innerText = `${caughtCount} / 20`;
+  roundCounter.innerText=`${caught}/20`;
 
-  if (caughtCount >= 20 && balls.length === 0) {
-    score += 100;
-    state = "next";
-    setScreen("nextLevelScreen");
+  if(caught>=20 && balls.length===0){
+    score+=100;
+    state="next";
+    show(screens.next);
   }
 
-  if (lives <= 0) gameOver();
+  if(lives<=0) gameOver();
 }
 
 // =====================
-function gameOver() {
-  state = "gameover";
-  setScreen("gameOver");
-  document.getElementById("finalScore").innerText = "Счёт: " + score;
+function gameOver(){
+  state="over";
+  show(screens.over);
+
+  document.getElementById("finalScore").innerText="Счёт: "+score;
+
+  let best=localStorage.getItem("best")||0;
+  if(score>best){
+    localStorage.setItem("best",score);
+    best=score;
+  }
+
+  document.getElementById("bestScore").innerText=best;
 }
 
 // =====================
-// RENDER (with shake + particles)
-// =====================
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  ctx.save();
+  // cone
+  ctx.fillStyle="#d8a15a";
+  ctx.beginPath();
+  ctx.moveTo(coneX-60,canvas.height-120);
+  ctx.lineTo(coneX+60,canvas.height-120);
+  ctx.lineTo(coneX,canvas.height-20);
+  ctx.fill();
 
-  if (shake > 0) {
-    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-    shake *= 0.9;
+  // balls
+  for(let b of balls){
+    ctx.fillStyle=b.color;
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fill();
   }
-
-  drawCone();
-
-  for (let b of balls) drawBall(b);
 
   // particles
-  for (let p of particles) {
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life / 30;
-    ctx.fillRect(p.x, p.y, 3, 3);
+  for(let p of particles){
+    ctx.globalAlpha=p.life/25;
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x,p.y,3,3);
+    p.x+=p.vx;p.y+=p.vy;p.life--;
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
+  particles=particles.filter(p=>p.life>0);
 
-  ctx.restore();
-
-  document.getElementById("score").innerText = "Очки: " + score;
-  document.getElementById("lives").innerText = "❤️".repeat(lives);
-  document.getElementById("level").innerText = "Уровень: " + level;
+  document.getElementById("score").innerText="Очки: "+score;
+  document.getElementById("lives").innerText="❤️".repeat(lives);
+  document.getElementById("level").innerText="Уровень: "+level;
 }
 
 // =====================
-function loop() {
+function loop(){
   update();
   render();
   requestAnimationFrame(loop);
 }
 
-setScreen("startScreen");
+show(screens.start);
 loop();
