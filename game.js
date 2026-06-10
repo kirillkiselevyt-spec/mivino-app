@@ -1,7 +1,9 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// =====================
 // UI
+// =====================
 const screens = {
   start: document.getElementById("startScreen"),
   stats: document.getElementById("statsScreen"),
@@ -29,38 +31,48 @@ let lives = 5;
 let level = 1;
 
 let caught = 0;
-let processed = 0; // 👈 FIX CORE
+let missed = 0;
 
 let balls = [];
 let levelBalls = [];
 
-// cone
-let coneX = innerWidth/2;
-let coneV = 0;
-let targetX = coneX;
-
 // =====================
 // INPUT
 // =====================
+let targetX = innerWidth/2;
+let coneX = innerWidth/2;
+let coneV = 0;
+
 window.addEventListener("pointermove", e => targetX = e.clientX);
-window.addEventListener("touchmove", e => targetX = e.touches[0].clientX, { passive:true });
+window.addEventListener("touchmove", e => targetX = e.touches[0].clientX, {passive:true});
 
 // =====================
-// UI CONTROL (FIXED)
+// UI FIX (ГЛАВНОЕ)
 // =====================
-function show(s){
-  Object.values(screens).forEach(v => v.style.display="none");
-  if(s) s.style.display="flex";
+function show(screen){
+  Object.values(screens).forEach(s => {
+    if(s) s.style.display = "none";
+  });
+
+  if(screen) screen.style.display = "flex";
 }
 
-window.openStats = () => show(screens.stats);
-window.closeStats = () => show(screens.start);
+// 🔥 ГАРАНТИРОВАННЫЕ ФУНКЦИИ
+window.openStats = function(){
+  show(screens.stats);
+};
+
+window.closeStats = function(){
+  show(screens.start);
+};
 
 // =====================
 window.startGame = function(){
-  score=0;lives=5;level=1;
+  score=0;
+  lives=5;
+  level=1;
   caught=0;
-  processed=0;
+  missed=0;
 
   startLevel();
   state="play";
@@ -83,7 +95,7 @@ function startLevel(){
   balls=[];
   levelBalls=[];
   caught=0;
-  processed=0;
+  missed=0;
 
   for(let i=0;i<20;i++){
     const trigger=0.6-0.2*(i/19);
@@ -95,8 +107,7 @@ function startLevel(){
       speed:2+level*0.35,
       color:["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"][i%5],
       spawned:false,
-      trigger,
-      done:false
+      trigger
     });
   }
 }
@@ -113,16 +124,27 @@ function updateCone(){
 }
 
 // =====================
-// LEVEL END FIX (MAIN FIX)
+// ROUND END LOGIC (FIXED V22)
 // =====================
-function checkLevelEnd(){
-  const allSpawned = levelBalls.every(b => b.spawned);
-  const allDone = levelBalls.every(b => b.done);
+function checkRoundEnd(){
+  const total = caught + missed;
 
-  if(allSpawned && allDone){
-    score += 100;
-    state="next";
-    show(screens.next);
+  if(total >= 20){
+    if(lives > 0){
+      score += 100;
+
+      localStorage.setItem("lastScore", score);
+
+      let best = localStorage.getItem("best")||0;
+      if(score > best){
+        localStorage.setItem("best", score);
+      }
+
+      state="next";
+      show(screens.next);
+    } else {
+      gameOver();
+    }
   }
 }
 
@@ -134,7 +156,7 @@ function update(){
 
   for(let b of levelBalls){
     if(!b.spawned){
-      const last=balls[balls.length-1];
+      const last = balls[balls.length-1];
       if(!last || last.y > canvas.height*b.trigger){
         b.spawned=true;
         balls.push(b);
@@ -152,26 +174,22 @@ function update(){
     if(hit){
       score++;
       caught++;
-      b.done=true;
       balls.splice(i--,1);
       continue;
     }
 
     if(b.y > canvas.height){
       lives--;
-      b.done=true;
+      missed++;
       balls.splice(i--,1);
     }
   }
 
-  // count processed correctly
-  processed = levelBalls.filter(b=>b.done).length;
+  roundCounter.innerText = `${caught+missed}/20`;
 
-  roundCounter.innerText = `${processed}/20`;
+  if(lives <= 0) gameOver();
 
-  if(lives<=0) gameOver();
-
-  checkLevelEnd();
+  checkRoundEnd();
 }
 
 // =====================
@@ -179,15 +197,13 @@ function gameOver(){
   state="over";
   show(screens.over);
 
-  document.getElementById("finalScore").innerText="Счёт: "+score;
+  document.getElementById("finalScore").innerText = "Счёт: " + score;
 
-  let best = localStorage.getItem("best")||0;
-  if(score>best){
-    localStorage.setItem("best",score);
-    best=score;
-  }
+  document.getElementById("bestScore").innerText =
+    localStorage.getItem("best") || 0;
 
-  document.getElementById("bestScore").innerText=best;
+  document.getElementById("lastScore").innerText =
+    localStorage.getItem("lastScore") || 0;
 }
 
 // =====================
