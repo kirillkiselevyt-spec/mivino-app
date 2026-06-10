@@ -10,55 +10,63 @@ function resize() {
 resize();
 addEventListener("resize", resize);
 
+// =====================
 // STATE
+// =====================
 let state = "menu";
-
-// GAME
-let coneX = innerWidth / 2;
 
 let score = 0;
 let lives = 5;
 let level = 1;
 
 let caughtCount = 0;
+
 let balls = [];
 let levelBalls = [];
 
-// COLORS
-const colors = ["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"];
-
-
 // =====================
-// 🔥 FIX INPUT (MOBILE + DESKTOP)
+// INPUT (FIXED FOR ALL BROWSERS)
 // =====================
 
-// Pointer Events = лучший вариант
-function setConePosition(clientX) {
-  coneX = clientX;
-}
+let targetX = innerWidth / 2;
+let coneX = innerWidth / 2;
+let pointerActive = false;
 
-// mouse
-window.addEventListener("mousemove", (e) => {
-  setConePosition(e.clientX);
+// 🔥 pointer down = захват управления
+canvas.addEventListener("pointerdown", (e) => {
+  pointerActive = true;
+  targetX = e.clientX;
+
+  // CRITICAL FIX for Chrome + VK WebView
+  if (canvas.setPointerCapture) {
+    canvas.setPointerCapture(e.pointerId);
+  }
 });
 
-// touch (fallback)
+// 🔥 pointer move = движение только если активен
+canvas.addEventListener("pointermove", (e) => {
+  if (!pointerActive) return;
+  targetX = e.clientX;
+});
+
+// pointer up
+canvas.addEventListener("pointerup", () => {
+  pointerActive = false;
+});
+
+// fallback safety (Safari old cases)
+window.addEventListener("touchstart", (e) => {
+  targetX = e.touches[0].clientX;
+});
+
 window.addEventListener("touchmove", (e) => {
-  setConePosition(e.touches[0].clientX);
-}, { passive: true });
-
-// pointer (главный фикс для мобильных)
-window.addEventListener("pointermove", (e) => {
-  setConePosition(e.clientX);
-});
+  targetX = e.touches[0].clientX;
+}, { passive: false });
 
 // =====================
-// UI
-// =====================
-function showScreen(id) {
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("nextLevelScreen").style.display = "none";
-  document.getElementById("gameOver").style.display = "none";
+function setScreen(id) {
+  ["startScreen","nextLevelScreen","gameOver"]
+    .forEach(i => document.getElementById(i).style.display = "none");
 
   if (id) document.getElementById(id).style.display = "flex";
 }
@@ -72,21 +80,18 @@ window.startGame = function () {
 
   startLevel();
   state = "play";
-
-  showScreen(null);
+  setScreen(null);
 };
 
-// =====================
 window.nextLevel = function () {
   level++;
   if (level > 20) return gameOver();
 
   startLevel();
   state = "play";
-  showScreen(null);
+  setScreen(null);
 };
 
-// =====================
 window.restartGame = function () {
   startGame();
 };
@@ -105,13 +110,20 @@ function startLevel() {
       y: -50,
       r: 22,
       speed: 2 + level * 0.4,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: ["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"][i % 5],
       spawned: false,
       trigger
     });
   }
 
   roundCounter.innerText = "0 / 20";
+}
+
+// =====================
+// FEEL (SMOOTHING)
+// =====================
+function updateCone() {
+  coneX += (targetX - coneX) * 0.18;
 }
 
 // =====================
@@ -143,6 +155,8 @@ function drawBall(b) {
 // =====================
 function update() {
   if (state !== "play") return;
+
+  updateCone();
 
   for (let b of levelBalls) {
     if (!b.spawned) {
@@ -185,7 +199,7 @@ function update() {
   if (caughtCount >= 20 && balls.length === 0) {
     score += 100;
     state = "next";
-    showScreen("nextLevelScreen");
+    setScreen("nextLevelScreen");
   }
 
   if (lives <= 0) gameOver();
@@ -194,7 +208,7 @@ function update() {
 // =====================
 function gameOver() {
   state = "gameover";
-  showScreen("gameOver");
+  setScreen("gameOver");
   document.getElementById("finalScore").innerText = "Счёт: " + score;
 }
 
@@ -218,5 +232,5 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-showScreen("startScreen");
+setScreen("startScreen");
 loop();
