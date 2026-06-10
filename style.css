@@ -9,8 +9,6 @@ canvas {
   position: absolute;
   inset: 0;
   touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 #ui {
@@ -47,6 +45,6 @@ canvas {
 
 button {
   font-family: "Lora";
-  padding: 10px 18px;
   margin: 6px;
+  padding: 10px 18px;
 }
