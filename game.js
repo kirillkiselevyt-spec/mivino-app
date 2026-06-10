@@ -27,22 +27,57 @@ let balls = [];
 let levelBalls = [];
 
 // =====================
-// INPUT (V18 PHYSICS)
+// INPUT + PHYSICS (V18 base)
 // =====================
 let targetX = innerWidth / 2;
 let coneX = innerWidth / 2;
 let coneVelocity = 0;
 
+// =====================
+// JUICE STATE
+// =====================
+let particles = [];
+let shake = 0;
+
+// =====================
+// AUDIO (no files)
+// =====================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq, time, type = "sine", vol = 0.05) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.value = vol;
+
+  o.connect(g);
+  g.connect(audioCtx.destination);
+
+  o.start();
+  o.stop(audioCtx.currentTime + time);
+}
+
+// =====================
+// HAPTIC
+// =====================
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+// =====================
+// INPUT
+// =====================
 function setInput(x) {
   targetX = x;
 }
 
-// mobile + desktop
 window.addEventListener("pointermove", (e) => setInput(e.clientX));
 window.addEventListener("touchmove", (e) => setInput(e.touches[0].clientX), { passive: true });
 
 // =====================
-// SCREEN CONTROL
+// SCREEN
 // =====================
 function setScreen(id) {
   ["startScreen","nextLevelScreen","gameOver"]
@@ -77,12 +112,11 @@ window.restartGame = function () {
 };
 
 // =====================
-// LEVEL
-// =====================
 function startLevel() {
   balls = [];
   levelBalls = [];
   caughtCount = 0;
+  particles = [];
 
   for (let i = 0; i < 20; i++) {
     const trigger = 0.6 - 0.2 * (i / 19);
@@ -102,9 +136,9 @@ function startLevel() {
 }
 
 // =====================
-// V18 PHYSICS ENGINE
+// V19 CONE PHYSICS + JUICE
 // =====================
-function updateConePhysics() {
+function updateCone() {
   const attraction = 0.18;
   const damping = 0.82;
   const maxSpeed = 28;
@@ -118,24 +152,62 @@ function updateConePhysics() {
 
   coneX += coneVelocity;
 
-  // 🔥 FIX: clamp position inside screen
   const margin = 60;
   coneX = Math.max(margin, Math.min(canvas.width - margin, coneX));
+
+  // 🍦 squash & stretch (visual feel)
+  coneScale = 1 + Math.abs(coneVelocity) * 0.01;
+  coneScale = Math.min(1.25, coneScale);
 }
 
+let coneScale = 1;
+
+// =====================
+// PARTICLES
+// =====================
+function spawnParticle(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 30,
+      color
+    });
+  }
+}
+
+function updateParticles() {
+  for (let p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+// =====================
+// DRAW CONE (JUICED)
 // =====================
 function drawCone() {
   const x = coneX;
   const y = canvas.height - 120;
 
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(coneScale, 1);
+
   ctx.fillStyle = "#d8a15a";
 
   ctx.beginPath();
-  ctx.moveTo(x - 60, y);
-  ctx.lineTo(x + 60, y);
-  ctx.lineTo(x, y + 140);
+  ctx.moveTo(-60, 0);
+  ctx.lineTo(60, 0);
+  ctx.lineTo(0, 140);
   ctx.closePath();
   ctx.fill();
+
+  ctx.restore();
 
   roundCounter.style.left = x + "px";
   roundCounter.style.top = (y + 20) + "px";
@@ -150,10 +222,13 @@ function drawBall(b) {
 }
 
 // =====================
+// UPDATE GAME
+// =====================
 function update() {
   if (state !== "play") return;
 
-  updateConePhysics();
+  updateCone();
+  updateParticles();
 
   for (let b of levelBalls) {
     if (!b.spawned) {
@@ -173,11 +248,17 @@ function update() {
 
     const hit =
       b.y > canvas.height - 100 &&
-      Math.abs(b.x - coneX) < 60;
+      Math.abs(b.x - coneX) < 65; // 🎯 slight assist
 
     if (hit) {
       score++;
       caughtCount++;
+
+      spawnParticle(b.x, b.y, b.color);
+
+      beep(600, 0.05, "sine", 0.04);
+      vibrate(15);
+
       balls.splice(i, 1);
       i--;
       continue;
@@ -185,6 +266,11 @@ function update() {
 
     if (b.y > canvas.height) {
       lives--;
+
+      shake = 10;
+      beep(200, 0.08, "square", 0.03);
+      vibrate(40);
+
       balls.splice(i, 1);
       i--;
     }
@@ -209,12 +295,31 @@ function gameOver() {
 }
 
 // =====================
+// RENDER (with shake + particles)
+// =====================
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+
+  if (shake > 0) {
+    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    shake *= 0.9;
+  }
 
   drawCone();
 
   for (let b of balls) drawBall(b);
+
+  // particles
+  for (let p of particles) {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / 30;
+    ctx.fillRect(p.x, p.y, 3, 3);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
 
   document.getElementById("score").innerText = "Очки: " + score;
   document.getElementById("lives").innerText = "❤️".repeat(lives);
