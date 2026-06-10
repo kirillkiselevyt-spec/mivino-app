@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Mivino Ice Cream V23</title>
+  <meta charset="UTF-8" />
+  <title>Mivino Ice Cream</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -12,40 +12,41 @@
 
 <canvas id="game"></canvas>
 
-<div id="ui">
-  <div id="score"></div>
-  <div id="lives"></div>
-  <div id="level"></div>
+<div id="hud">
+  <div id="score">Очки: 0</div>
+  <div id="lives">❤️❤️❤️❤️❤️</div>
+  <div id="level">Уровень: 1</div>
 </div>
 
-<div id="roundCounter">0 / 20</div>
+<div id="round">0 / 20</div>
 
 <!-- START -->
-<div id="startScreen" class="screen">
+<div id="start">
   <h1>Mivino Ice Cream</h1>
-  <button id="btnStart">Играть</button>
-  <button id="btnStats">Статистика</button>
+  <button id="playBtn">Играть</button>
+  <button id="statsBtn">Статистика</button>
 </div>
 
 <!-- STATS -->
-<div id="statsScreen" class="screen">
+<div id="stats">
   <h2>Статистика</h2>
-  <p>Лучший результат: <span id="bestScore">0</span></p>
-  <p>Последний результат: <span id="lastScore">0</span></p>
-  <button id="btnBack">Назад</button>
+  <p>Лучший: <span id="best">0</span></p>
+  <p>Последний: <span id="last">0</span></p>
+  <button id="backBtn">Назад</button>
 </div>
 
 <!-- NEXT -->
-<div id="nextScreen" class="screen">
+<div id="next">
   <h2>Уровень пройден!</h2>
-  <button id="btnNext">Следующий уровень</button>
+  <button id="nextBtn">Следующий</button>
 </div>
 
 <!-- GAME OVER -->
-<div id="gameOverScreen" class="screen">
-  <h1>Игра окончена</h1>
-  <p id="finalScore"></p>
-  <button id="btnRestart">Заново</button>
+<div id="over">
+  <h2>Игра окончена</h2>
+  <p id="final"></p>
+  <button id="restartBtn">Заново</button>
+  <button id="overStatsBtn">Статистика</button>
 </div>
 
 <script src="game.js"></script>
