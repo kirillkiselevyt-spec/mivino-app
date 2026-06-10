@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Mivino Ice Cream</title>
+  <title>Mivino Ice Cream V23</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -20,35 +20,32 @@
 
 <div id="roundCounter">0 / 20</div>
 
-<!-- START SCREEN -->
+<!-- START -->
 <div id="startScreen" class="screen">
   <h1>Mivino Ice Cream</h1>
-
-  <button onclick="startGame()">Играть</button>
-  <button onclick="openStats()">Статистика</button>
+  <button id="btnStart">Играть</button>
+  <button id="btnStats">Статистика</button>
 </div>
 
-<!-- STATS SCREEN -->
+<!-- STATS -->
 <div id="statsScreen" class="screen">
   <h2>Статистика</h2>
-
   <p>Лучший результат: <span id="bestScore">0</span></p>
   <p>Последний результат: <span id="lastScore">0</span></p>
-
-  <button onclick="closeStats()">Назад</button>
+  <button id="btnBack">Назад</button>
 </div>
 
-<!-- NEXT LEVEL -->
-<div id="nextLevelScreen" class="screen">
+<!-- NEXT -->
+<div id="nextScreen" class="screen">
   <h2>Уровень пройден!</h2>
-  <button onclick="nextLevel()">Следующий уровень</button>
+  <button id="btnNext">Следующий уровень</button>
 </div>
 
 <!-- GAME OVER -->
-<div id="gameOver" class="screen">
+<div id="gameOverScreen" class="screen">
   <h1>Игра окончена</h1>
   <p id="finalScore"></p>
-  <button onclick="restartGame()">Заново</button>
+  <button id="btnRestart">Заново</button>
 </div>
 
 <script src="game.js"></script>
