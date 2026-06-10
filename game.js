@@ -20,19 +20,40 @@ let score = 0;
 let lives = 5;
 let level = 1;
 
-let caughtCount = 0;     // ✅ ВАЖНО: пойманные
-let spawnedCount = 0;    // служебный (не для UI)
-
+let caughtCount = 0;
 let balls = [];
 let levelBalls = [];
 
+// COLORS
 const colors = ["#ff5c7a","#ffcc66","#7a4dff","#5ad1ff","#34d399"];
 
-// INPUT
-addEventListener("mousemove", e => coneX = e.clientX);
 
 // =====================
-// SCREEN CONTROL
+// 🔥 FIX INPUT (MOBILE + DESKTOP)
+// =====================
+
+// Pointer Events = лучший вариант
+function setConePosition(clientX) {
+  coneX = clientX;
+}
+
+// mouse
+window.addEventListener("mousemove", (e) => {
+  setConePosition(e.clientX);
+});
+
+// touch (fallback)
+window.addEventListener("touchmove", (e) => {
+  setConePosition(e.touches[0].clientX);
+}, { passive: true });
+
+// pointer (главный фикс для мобильных)
+window.addEventListener("pointermove", (e) => {
+  setConePosition(e.clientX);
+});
+
+// =====================
+// UI
 // =====================
 function showScreen(id) {
   document.getElementById("startScreen").style.display = "none";
@@ -43,17 +64,15 @@ function showScreen(id) {
 }
 
 // =====================
-// START GAME
-// =====================
 window.startGame = function () {
   score = 0;
   lives = 5;
   level = 1;
+  caughtCount = 0;
 
-  caughtCount = 0;   // ✅ reset
   startLevel();
-
   state = "play";
+
   showScreen(null);
 };
 
@@ -73,23 +92,13 @@ window.restartGame = function () {
 };
 
 // =====================
-window.backToMenu = function () {
-  state = "menu";
-  showScreen("startScreen");
-};
-
-// =====================
-// LEVEL SETUP
-// =====================
 function startLevel() {
   balls = [];
   levelBalls = [];
-  spawnedCount = 0;
   caughtCount = 0;
 
   for (let i = 0; i < 20; i++) {
-    const t = i / 19;
-    const trigger = 0.6 - 0.2 * t;
+    const trigger = 0.6 - 0.2 * (i / 19);
 
     levelBalls.push({
       x: Math.random() * canvas.width,
@@ -102,21 +111,15 @@ function startLevel() {
     });
   }
 
-  updateCounter();
+  roundCounter.innerText = "0 / 20";
 }
 
-// =====================
-// CONE + UI ANCHOR
 // =====================
 function drawCone() {
   const x = coneX;
   const y = canvas.height - 120;
 
-  const g = ctx.createLinearGradient(x, y, x, y + 140);
-  g.addColorStop(0, "#f6d7a7");
-  g.addColorStop(1, "#b8874f");
-
-  ctx.fillStyle = g;
+  ctx.fillStyle = "#d8a15a";
 
   ctx.beginPath();
   ctx.moveTo(x - 60, y);
@@ -130,8 +133,6 @@ function drawCone() {
 }
 
 // =====================
-// BALL
-// =====================
 function drawBall(b) {
   ctx.fillStyle = b.color;
   ctx.beginPath();
@@ -140,19 +141,9 @@ function drawBall(b) {
 }
 
 // =====================
-// UPDATE COUNTER (FIX)
-// =====================
-function updateCounter() {
-  roundCounter.innerText = `${caughtCount} / 20`;
-}
-
-// =====================
-// UPDATE
-// =====================
 function update() {
   if (state !== "play") return;
 
-  // spawn
   for (let b of levelBalls) {
     if (!b.spawned) {
       const last = balls[balls.length - 1];
@@ -161,7 +152,6 @@ function update() {
       if (!last || last.y > triggerY) {
         b.spawned = true;
         balls.push(b);
-        spawnedCount++;
       }
     }
   }
@@ -176,9 +166,7 @@ function update() {
 
     if (hit) {
       score++;
-      caughtCount++;     // ✅ ВОТ ГЛАВНЫЙ ФИКС
-
-      updateCounter();
+      caughtCount++;
 
       balls.splice(i, 1);
       i--;
@@ -191,6 +179,8 @@ function update() {
       i--;
     }
   }
+
+  roundCounter.innerText = `${caughtCount} / 20`;
 
   if (caughtCount >= 20 && balls.length === 0) {
     score += 100;
