@@ -8,13 +8,9 @@ body {
 canvas {
   position: absolute;
   inset: 0;
-
-  /* 🔥 критично для iOS + VK + Chrome */
   touch-action: none;
-  overscroll-behavior: none;
-  -webkit-user-select: none;
   user-select: none;
-  -webkit-touch-callout: none;
+  -webkit-user-select: none;
 }
 
 #ui {
@@ -29,25 +25,16 @@ canvas {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  font-weight: 700;
-  font-size: 12px;
-
   background: rgba(255,255,255,0.35);
-  border: 1px solid rgba(255,255,255,0.6);
   backdrop-filter: blur(10px);
-
   transform: translate(-50%, -50%);
   z-index: 20;
 }
 
-#startScreen,
-#nextLevelScreen,
-#gameOver {
+.screen {
   position: absolute;
   inset: 0;
   display: none;
@@ -56,4 +43,10 @@ canvas {
   flex-direction: column;
   background: rgba(255,255,255,0.92);
   z-index: 100;
+}
+
+button {
+  font-family: "Lora";
+  padding: 10px 18px;
+  margin: 6px;
 }
