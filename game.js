@@ -3,6 +3,9 @@ const ctx = canvas.getContext("2d");
 
 const roundCounter = document.getElementById("roundCounter");
 
+// =====================
+// RESIZE
+// =====================
 function resize() {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
@@ -24,31 +27,22 @@ let balls = [];
 let levelBalls = [];
 
 // =====================
-// INPUT (FIXED FOR iOS + VK + CHROME)
+// INPUT (V18 PHYSICS)
 // =====================
-
 let targetX = innerWidth / 2;
 let coneX = innerWidth / 2;
+let coneVelocity = 0;
 
-// 🔥 UNIVERSAL INPUT (NO POINTER CAPTURE)
 function setInput(x) {
   targetX = x;
 }
 
-// Desktop / Android
-window.addEventListener("pointermove", (e) => {
-  setInput(e.clientX);
-});
+// mobile + desktop
+window.addEventListener("pointermove", (e) => setInput(e.clientX));
+window.addEventListener("touchmove", (e) => setInput(e.touches[0].clientX), { passive: true });
 
-// iOS Safari / Chrome / VK WebView (CRITICAL)
-window.addEventListener("touchstart", (e) => {
-  setInput(e.touches[0].clientX);
-}, { passive: true });
-
-window.addEventListener("touchmove", (e) => {
-  setInput(e.touches[0].clientX);
-}, { passive: true });
-
+// =====================
+// SCREEN CONTROL
 // =====================
 function setScreen(id) {
   ["startScreen","nextLevelScreen","gameOver"]
@@ -83,6 +77,8 @@ window.restartGame = function () {
 };
 
 // =====================
+// LEVEL
+// =====================
 function startLevel() {
   balls = [];
   levelBalls = [];
@@ -106,10 +102,25 @@ function startLevel() {
 }
 
 // =====================
-// FEEL SMOOTHING
+// V18 PHYSICS ENGINE
 // =====================
-function updateCone() {
-  coneX += (targetX - coneX) * 0.18;
+function updateConePhysics() {
+  const attraction = 0.18;
+  const damping = 0.82;
+  const maxSpeed = 28;
+
+  const force = (targetX - coneX) * attraction;
+
+  coneVelocity += force;
+  coneVelocity *= damping;
+
+  coneVelocity = Math.max(-maxSpeed, Math.min(maxSpeed, coneVelocity));
+
+  coneX += coneVelocity;
+
+  // 🔥 FIX: clamp position inside screen
+  const margin = 60;
+  coneX = Math.max(margin, Math.min(canvas.width - margin, coneX));
 }
 
 // =====================
@@ -142,7 +153,7 @@ function drawBall(b) {
 function update() {
   if (state !== "play") return;
 
-  updateCone();
+  updateConePhysics();
 
   for (let b of levelBalls) {
     if (!b.spawned) {
@@ -167,7 +178,6 @@ function update() {
     if (hit) {
       score++;
       caughtCount++;
-
       balls.splice(i, 1);
       i--;
       continue;
@@ -201,8 +211,6 @@ function gameOver() {
 // =====================
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  updateCone();
 
   drawCone();
 
