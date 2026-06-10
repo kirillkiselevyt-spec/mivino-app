@@ -1,0 +1,91 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: "Lora", serif;
+
+  background: linear-gradient(135deg,#fdfcff,#eef6ff,#fff2f6);
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  color: #222;
+}
+
+/* ROUND */
+#round {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(12px);
+}
+
+/* GLASS PANEL */
+.panel {
+  padding: 26px;
+  border-radius: 22px;
+
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px);
+
+  box-shadow:
+    0 25px 60px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+
+  text-align: center;
+}
+
+/* SCREENS */
+#start,#stats,#next,#over{
+  position: absolute;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(255,255,255,0.2);
+  z-index: 100;
+}
+
+/* BUTTONS */
+button {
+  font-family: "Lora";
+  margin: 10px;
+  padding: 14px 28px;
+
+  border: none;
+  border-radius: 18px;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  background: linear-gradient(145deg,#fff,#eaf0ff);
+
+  box-shadow:
+    0 15px 35px rgba(0,0,0,0.18),
+    inset 0 2px 0 rgba(255,255,255,0.9);
+
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-3px);
+}
+
+button:active {
+  transform: scale(0.98);
+}
