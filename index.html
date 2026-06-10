@@ -2,12 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Mivino Ice Cream</title>
+  <title>Mivino Ice Cream V20</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -23,17 +20,28 @@
 
 <div id="roundCounter">0 / 20</div>
 
-<div id="startScreen" style="display:flex;">
+<!-- START -->
+<div id="startScreen" class="screen">
   <h1>Mivino Ice Cream</h1>
   <button onclick="startGame()">Играть</button>
+  <button onclick="openStats()">Статистика</button>
 </div>
 
-<div id="nextLevelScreen">
+<!-- STATS -->
+<div id="statsScreen" class="screen">
+  <h2>Статистика</h2>
+  <p>Лучший результат: <span id="bestScore">0</span></p>
+  <button onclick="closeStats()">Назад</button>
+</div>
+
+<!-- NEXT -->
+<div id="nextLevelScreen" class="screen">
   <h2>Уровень пройден!</h2>
   <button onclick="nextLevel()">Следующий уровень</button>
 </div>
 
-<div id="gameOver">
+<!-- GAME OVER -->
+<div id="gameOver" class="screen">
   <h1>Игра окончена</h1>
   <p id="finalScore"></p>
   <button onclick="restartGame()">Заново</button>
