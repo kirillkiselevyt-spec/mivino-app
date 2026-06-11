@@ -30,25 +30,22 @@ const Renderer = {
 
     // 3. ОТРИСОВКА РОЖКА С ЭФФЕКТОМ ЖЕЛЕ (Squash & Stretch)
     ctx.save();
-    // Переносим центр координат в точку опоры рожка (низ стаканчика)
     ctx.translate(g.coneX, g.BASE_H - 40);
-    // Деформируем контекст на основе динамических масштабов пружины
     ctx.scale(g.coneScaleX, g.coneScaleY);
 
     if (Assets.loaded && Assets.cone.complete) {
-      // Рисуем рожок относительно локального смещенного центра
       ctx.drawImage(Assets.cone, -220, -160, 440, 220);
     } else {
       ctx.fillStyle = "#d9a066";
       ctx.fillRect(-140, -120, 280, 160);
     }
-    ctx.restore(); // Сбрасываем деформацию желе, чтобы она не влияла на шарики
+    ctx.restore();
 
-    // 4. Отрисовка шариков (Крупные сочные эллипсы)
+    // 4. Отрисовка шариков
     g.balls.forEach(b => {
       const ballW = b.r * 6;
       const ballH = b.r * 3;
-      
+
       if (Assets.loaded && Assets.balls[b.imgIndex] && Assets.balls[b.imgIndex].complete) {
         ctx.drawImage(Assets.balls[b.imgIndex], b.x - ballW / 2, b.y - ballH / 2, ballW, ballH);
       } else {
@@ -61,15 +58,15 @@ const Renderer = {
 
     // 5. Отрисовка брызг мороженого
     FX.particles.forEach(p => {
-      const maxLife = p.maxLife || 40; 
+      const maxLife = p.maxLife || 40;
       const lifeRatio = Math.max(0, Math.min(1, p.life / maxLife));
-      
+
       ctx.save();
       ctx.globalAlpha = lifeRatio;
-      
+
       const currentRadius = p.r * lifeRatio;
       const velocityAngle = Math.atan2(p.vy, p.vx);
-      
+
       ctx.fillStyle = "#fff8f0";
       ctx.shadowColor = "rgba(255, 255, 255, 0.4)";
       ctx.shadowBlur = 8 * lifeRatio;
@@ -77,12 +74,12 @@ const Renderer = {
       ctx.beginPath();
       const stretch = Math.sqrt(p.vx * p.vx + p.vy * p.vy) * 0.12;
       ctx.ellipse(
-        p.x, 
-        p.y, 
-        currentRadius + stretch, 
-        Math.max(1, currentRadius), 
-        velocityAngle, 
-        0, 
+        p.x,
+        p.y,
+        currentRadius + stretch,
+        Math.max(1, currentRadius),
+        velocityAngle,
+        0,
         Math.PI * 2
       );
       ctx.fill();
@@ -94,14 +91,13 @@ const Renderer = {
       ctx.save();
       const alpha = p.life / p.maxLife;
       ctx.globalAlpha = alpha;
-      
+
       ctx.fillStyle = "#ffffff";
       ctx.shadowColor = "#ff4791";
       ctx.shadowBlur = 6;
       ctx.font = "bold 24px 'Lora', serif";
       ctx.textAlign = "center";
-      
-      // Выводим текст
+
       ctx.fillText(p.text, p.x, p.y);
       ctx.restore();
     });
@@ -134,6 +130,9 @@ const UI = {
       if (el) el.style.display = "none";
     });
 
+    const rc = document.getElementById("roundCounter");
+    if (rc) rc.style.display = (screenId === "play") ? "flex" : "none";
+
     if (screenId === "play") return;
 
     const target = document.getElementById(screenId) || document.getElementById(screenId + "Screen");
@@ -143,7 +142,7 @@ const UI = {
   buildLeaderboardHTML(games, limit = 5) {
     if (!games || games.length === 0) return "<p>Нет записей</p>";
     const topGames = [...games].sort((a, b) => b.score - a.score).slice(0, limit);
-    
+
     let html = `<table class="stats-table"><tr><th>Место</th><th>Очки</th><th>Уровень</th><th>Дата</th></tr>`;
     topGames.forEach((game, index) => {
       html += `<tr><td><strong>#${index + 1}</strong></td><td>${game.score}</td><td>${game.level}</td><td style="font-size:11px">${game.date}</td></tr>`;
@@ -155,7 +154,7 @@ const UI = {
   buildHistoryHTML(games) {
     if (!games || games.length === 0) return "<p style='text-align:center'>Вы еще не сыграли ни одной игры</p>";
     const chronological = [...games].reverse();
-    
+
     let html = `<div class="scroll-box"><table class="stats-table" style="margin:0; max-width:100%;"><tr><th>Дата/Время</th><th>Очки</th><th>Ур.</th></tr>`;
     chronological.forEach(game => {
       html += `<tr><td style="font-size:11px">${game.date}</td><td>${game.score}</td><td>${game.level}</td></tr>`;
@@ -177,6 +176,12 @@ window.startGame = () => {
 
 window.restartGame = () => window.startGame();
 
+// ДОБАВЛЕНО: возврат в главное меню с game over экрана
+window.goToMenu = () => {
+  GameState.state = "menu";
+  UI.show("startScreen");
+};
+
 window.nextLevel = () => {
   GameState.level++;
   GameState.initLevel();
@@ -189,7 +194,7 @@ window.openStats = () => {
   GameState.statsOpenedFrom = "menu";
   const rawData = localStorage.getItem("mivino_games_history") || "[]";
   const games = JSON.parse(rawData);
-  
+
   document.getElementById("leaderboardContainer").innerHTML = UI.buildLeaderboardHTML(games, 5);
   document.getElementById("historyContainer").innerHTML = UI.buildHistoryHTML(games);
   UI.show("statsScreen");
@@ -199,7 +204,7 @@ window.openStatsFromGameOver = () => {
   GameState.statsOpenedFrom = "over";
   const rawData = localStorage.getItem("mivino_games_history") || "[]";
   const games = JSON.parse(rawData);
-  
+
   document.getElementById("leaderboardContainer").innerHTML = UI.buildLeaderboardHTML(games, 5);
   document.getElementById("historyContainer").innerHTML = UI.buildHistoryHTML(games);
   UI.show("statsScreen");
