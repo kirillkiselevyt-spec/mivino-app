@@ -9,18 +9,20 @@ body {
   background: linear-gradient(to bottom, #ffe6f2, #d6f0ff);
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  /* ИСПРАВЛЕНО: touch-action убран отсюда — иначе блокируется Swipe Back на iOS */
 }
 
 canvas {
   position: fixed;
   inset: 0;
   z-index: 1;
+  touch-action: none; /* ИСПРАВЛЕНО: блокируем тач только на канвасе, не на всём body */
 }
 
 #ui {
-  position: absolute;
-  top: max(20px, calc(16px * var(--ui-scale)));
+  position: fixed; /* ИСПРАВЛЕНО: было absolute — fixed корректнее для VK WebView */
+  /* ИСПРАВЛЕНО: учитываем вырез камеры (notch / Dynamic Island) на iOS */
+  top: max(20px, calc(env(safe-area-inset-top, 0px) + 10px));
   left: max(20px, calc(16px * var(--ui-scale)));
   right: max(20px, calc(16px * var(--ui-scale)));
   z-index: 10;
@@ -34,10 +36,10 @@ canvas {
 }
 
 #roundCounter {
-  position: absolute;
+  position: fixed; /* ИСПРАВЛЕНО: было absolute, должно быть fixed как и #ui */
   padding: 6px 14px;
   border-radius: 20px;
-  display: flex;
+  display: none; /* ИСПРАВЛЕНО: скрыт по умолчанию, UI.show("play") его покажет */
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.6);
