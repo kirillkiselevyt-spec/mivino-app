@@ -1,6 +1,6 @@
 const Assets = {
   loaded: false,
-  ballCount: 4, 
+  ballCount: 5, // ИСПРАВЛЕНО: было 4, шариков в проекте 5
 
   balls: [],
   cone: new Image(),
@@ -21,7 +21,7 @@ const Assets = {
     for (let i = 1; i <= this.ballCount; i++) {
       const img = new Image();
       img.onload = onLoad;
-      img.onerror = onLoad; 
+      img.onerror = onLoad;
       img.src = `assets/ball_${i}.png`;
       this.balls.push(img);
     }
