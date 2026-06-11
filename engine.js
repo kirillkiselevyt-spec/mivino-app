@@ -63,7 +63,7 @@ const Engine = {
 
     // Обновление логики всплывающего текста (+10)
     g.popups.forEach(p => {
-      p.y -= 1.5; // Текст плавно летит вверх
+      p.y -= 1.5;
       p.life--;
     });
     g.popups = g.popups.filter(p => p.life > 0);
@@ -85,7 +85,6 @@ const Engine = {
         g.score += 10;
         g.caught++;
 
-        // Создаем сочный поп-ап текст в месте поимки
         g.popups.push({
           x: b.x,
           y: g.BASE_H - 180,
@@ -96,16 +95,14 @@ const Engine = {
 
         g.balls.splice(i--, 1);
 
-        // Импульс деформации рожка: при падении шарика рожок сжимается по вертикали
         g.coneScaleX = 1.3;
         g.coneScaleY = 0.7;
 
         FX.spawnParticles(b.x, b.y);
         FX.addShake(6);
 
-        // НАДЕЖНАЯ ВИБРАЦИЯ: Работает в VK App и обычных браузерах на смартфонах
         if (navigator.vibrate) {
-          navigator.vibrate(40); // Короткий тактильный отклик 40мс
+          navigator.vibrate(40);
         }
         if (window.vkBridge) {
           window.vkBridge.send("VKWebAppTapticNotificationOccurred", { type: "success" }).catch(() => {});
@@ -120,9 +117,8 @@ const Engine = {
 
         FX.addShake(14);
 
-        // Вибрация при промахе (более длинная и ощутимая)
         if (navigator.vibrate) {
-          navigator.vibrate([100, 50, 100]); 
+          navigator.vibrate([100, 50, 100]);
         }
         if (window.vkBridge) {
           window.vkBridge.send("VKWebAppTapticNotificationOccurred", { type: "warning" }).catch(() => {});
@@ -144,26 +140,32 @@ const Engine = {
     g.state = status;
 
     if (status === "over") {
+      // ДОБАВЛЕНО: отправляем счёт в VK Score — VK сохранит если это рекорд игрока,
+      // и покажет лидерборд среди друзей через стандартный интерфейс VK Mini Apps
+      if (window.vkBridge) {
+        window.vkBridge.send("VKWebAppSetScore", { score: g.score }).catch(() => {});
+      }
+
       const now = new Date();
       const dateStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth()+1).toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      
+
       const rawHistory = localStorage.getItem("mivino_games_history") || "[]";
       const history = JSON.parse(rawHistory);
-      
+
       history.push({
         score: g.score,
         level: g.level,
         date: dateStr
       });
-      
+
       localStorage.setItem("mivino_games_history", JSON.stringify(history));
 
       document.getElementById("finalScore").innerText = "Итоговый счёт: " + g.score;
       document.getElementById("finalLevel").innerText = "Достигнут уровень: " + g.level;
-      
+
       document.getElementById("endLeaderboardContainer").innerHTML = UI.buildLeaderboardHTML(history, 3);
       UI.show("gameOver");
-      
+
     } else if (status === "next") {
       const bonusAlert = document.getElementById("levelBonusAlert");
       if (g.level % 10 === 0) {
