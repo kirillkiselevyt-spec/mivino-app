@@ -13,14 +13,14 @@ const GameState = {
   balls: [],
   pool: [],
 
-  coneX: 225, 
+  coneX: 225,
   targetX: 225,
   coneV: 0,
 
   // Параметры сочности (Juiciness) для анимации рожка-желе
   coneScaleX: 1,
   coneScaleY: 1,
-  
+
   // Массив для всплывающего текста (+10 очков)
   popups: [],
 
@@ -39,7 +39,7 @@ const GameState = {
       this.pool.push({
         x: Math.random() * (this.BASE_W - 120) + 60,
         y: -60,
-        r: 25, 
+        r: 25,
         speed: 2.5 + this.level * 0.45,
         imgIndex: Math.floor(Math.random() * availableBallImages),
         active: false,
